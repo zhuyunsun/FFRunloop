@@ -46,9 +46,53 @@
 #pragma mark runloop相关的类
     /*
      关于runloop有两个相关的类
-     第一个是CoreFoundation框架中C语言,结构体
+     第一个是CoreFoundation框架中C语言
      第二个是Foundation框架中OC对象(是对第一个的一层对象级的封装)
+     
+     runloop的行为
+     
+     设置当前runloop的mode,启动子线程的runloop
+     获取当前线程的runloop,主线程的runloop
+     观察当前子线程的runloop行为
+     退出当前子线程的runloop
+     
+     
+
      */
+    
+    //C语言:结构体和函数,枚举,const常量
+    /*
+     CFRunLoop.h
+     
+     */
+    
+    //在子线程中启动对应的runloop
+    dispatch_queue_t qu1 = dispatch_queue_create("qu1", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_async(qu1, ^{
+        //设定mode,并启动runloop
+        CFRunLoopRef f = CFRunLoopGetCurrent();
+        CFRunLoopAddCommonMode(f, kCFRunLoopCommonModes);
+        CFRunLoopRun();
+        
+        NSLog(@"CFTypeID = %lu",CFRunLoopGetTypeID());
+        //关闭runloop
+        CFRunLoopStop(f);
+        
+        
+        
+        
+//        CFRunLoopSourceRef s = nil;
+//        CFRunLoopObserverRef o = nil;
+//        CFRunLoopTimerRef t = nil;
+//        CFRunLoopMode m = kCFRunLoopCommonModes;
+        
+    });
+    
+    
+    
+    
+    
+    [self runloopCoreFoundation];
     
 #pragma mark runloop中的mode
     /*
@@ -77,6 +121,58 @@
     
 }
 -(void)runloopCoreFoundation{
-//    CFRunLoopRef cf = CFRunLoopGetCurrent();
+    /*
+     启动子线程 -> 添加runloop观察者 -> 启动当前子线程runloop ->第一种手动退出(不会再执行后面的事件),第二种在完成任务后自动退出;
+     */
+    dispatch_queue_t q1 = dispatch_queue_create("1", DISPATCH_QUEUE_CONCURRENT);
+    //异步,并发队列:创建新的子线程
+    dispatch_async(q1, ^{
+        //创建runloop观察者
+        CFRunLoopObserverRef observer = CFRunLoopObserverCreateWithHandler(CFAllocatorGetDefault(), kCFRunLoopAllActivities, YES, 0, ^(CFRunLoopObserverRef observer, CFRunLoopActivity activity) {
+                 switch (activity) {
+            case kCFRunLoopEntry:
+                NSLog(@"RunLoop进入");
+                break;
+            case kCFRunLoopBeforeTimers:
+                NSLog(@"RunLoop要处理Timers了");
+                break;
+            case kCFRunLoopBeforeSources:
+                NSLog(@"RunLoop要处理Sources了");
+                break;
+            case kCFRunLoopBeforeWaiting:
+                NSLog(@"RunLoop要休息了");
+                break;
+            case kCFRunLoopAfterWaiting:
+                NSLog(@"RunLoop醒来了");
+                break;
+            case kCFRunLoopExit:
+                NSLog(@"RunLoop退出了");
+                break;
+              default:
+                    break;
+            }
+         });
+        //给runloop添加监听者
+         CFRunLoopAddObserver(CFRunLoopGetCurrent(), observer, kCFRunLoopDefaultMode);
+        //延迟事件,当runloop没有启动时,不会执行,因为子线程已经销毁退出;启动runloop之后,子线程一直存在,事件会在设定的时间之后执行;
+        [self performSelector:@selector(addActionFrom) withObject:nil afterDelay:2];
+        //启动当前子线程的runloop
+        CFRunLoopRef f = CFRunLoopGetCurrent();
+        CFRunLoopAddCommonMode(f, kCFRunLoopDefaultMode);
+        CFRunLoopRun();
+
+    });
+    
+}
+-(void)addActionFrom{
+    NSLog(@"game 1");
+    //关闭runloop
+    CFRunLoopStop(CFRunLoopGetCurrent());
+    //重新添加事件
+    [self performSelector:@selector(addActionFrom2) withObject:nil afterDelay:1];
+}
+-(void)addActionFrom2{
+    //如果在这个方法之前执行了关闭runloop操作,那么该事件不会再执行
+    NSLog(@"game 2");
 }
 @end

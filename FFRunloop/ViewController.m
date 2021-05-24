@@ -24,11 +24,11 @@
      iOS开发中定义了一种这样的机制:runloop
      runloop就像是一个不会停止的do while循环
      do{
-       //一直循环
+       //code
      }while(true)
      
      一个APP启动时,会有一条主线程并且主线程中默认启动runloop.
-     主线程中runloop:
+     主线程中runloop作用:
      维持了APP存活(主线程默认启动runloop,主线程不会被销毁)
      处理各种响应事件(Selector事件,线程间Port,事件响应,手势识别,UI刷新,AutoreleasePool自动释放池,NSTimer事件等等),也称为任务
      节省cpu消耗,提高程序性能(没有任务时,主线程处于休眠状态;有任务时,主线程处于活跃状态)

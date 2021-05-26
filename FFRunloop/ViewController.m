@@ -52,7 +52,8 @@
      runloop的行为
      
      设置当前runloop的mode,启动子线程的runloop
-     获取当前线程的runloop,主线程的runloop
+     进入每一次do-while执行任务时,可以切换不同的mode.
+     获取当前线程的runloop,包括主线程的runloop
      观察当前子线程的runloop行为
      退出当前子线程的runloop
      
@@ -60,9 +61,17 @@
 
      */
     
-    //C语言:结构体和函数,枚举,const常量
+    
     /*
-     CFRunLoop.h
+     CoreFoundation框架
+     C语言:结构体和函数,枚举,const常量
+     CFRunLoop.h文件
+     
+     1,CFRunLoopRef:获取当前线程runloop和主线程runloop;
+     2,CFRunLoopModeRef:runloop运行模式,只能选择其中一种,在不同的运行模式做不同的操作;
+     3,CFRunLoopSourceRef:事件源,输入源;
+     4,CFRunLoopTimerRef:定时器事件
+     5,CFRunLoopObserverRef:观察者,观察runloop的状态;
      
      */
     
@@ -99,14 +108,6 @@
      runloop在不同的mode下处理不同的事件;
      runloop每一次运行只能在其中的一种mode下运行;
      需要切换mode时,需要在下次进入循环之前进行切换;
-     
-     
-     
-     
-     
-     
-     
-     
      
      NSDefaultRunLoopMode:默认的mode,主线程的runloop mode就是默认在这种运行模式下运行.
      UITrackingRunLoopMode:当我们在主线程滑动ScrollView的时候,mode会切换到这种模式,保证不会受其他mode的影响.
@@ -156,7 +157,8 @@
          CFRunLoopAddObserver(CFRunLoopGetCurrent(), observer, kCFRunLoopDefaultMode);
         //延迟事件,当runloop没有启动时,不会执行,因为子线程已经销毁退出;启动runloop之后,子线程一直存在,事件会在设定的时间之后执行;
         [self performSelector:@selector(addActionFrom) withObject:nil afterDelay:2];
-        //启动当前子线程的runloop
+        
+        //启动当前子线程的runloop,设置当前runloop运行的mode
         CFRunLoopRef f = CFRunLoopGetCurrent();
         CFRunLoopAddCommonMode(f, kCFRunLoopDefaultMode);
         CFRunLoopRun();
